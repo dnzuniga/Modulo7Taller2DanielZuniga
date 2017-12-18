@@ -1,0 +1,27 @@
+/**
+ * Resuelve el Taller número 3 del módulo 6 "Profundización Desarrollo de Software",
+ * Programa CORFO "Mil Programadores".
+ *
+ * @autor Daniel Zúñiga Correa, 2017-12-07 (yyyy-mm-dd)
+ */
+package controlador;
+
+/**
+ * Clase principal que contienen el método main()
+ *
+ */
+public class VideoBuster {
+
+    /**
+     * Método main() para ejecutar el programa
+     *
+     * @author Daniel Zúñiga Correa
+     *
+     * @param args corrsponde a los argumenos propios de este método
+     */
+    public static void main(String[] args) {
+
+        new ControladorVideoBuster().iniciar();
+
+    }
+}

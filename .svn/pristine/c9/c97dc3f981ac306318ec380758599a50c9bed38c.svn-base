@@ -1,0 +1,49 @@
+/**
+ * Resuelve el Taller número 3 del módulo 6 "Profundización Desarrollo de Software",
+ * Programa CORFO "Mil Programadores".
+ *
+ * @autor Daniel Zúñiga Correa, 2017-12-07 (yyyy-mm-dd)
+ */
+package modelo;
+
+/**
+ * Clase para los futuros objetos Categoria, que contendrán las tuplas de la
+ * tabla categoria de la base de datos, contiene las reglas de negocio
+ * correspondientes
+ *
+ */
+public class Categoria {
+
+    /*atributos de clase*/
+    private int id;
+    private String descripcion;
+
+    /*constructor sin parámetros*/
+    public Categoria() {
+    }
+
+    /*constructor con parámetros*/
+    public Categoria(int id, String descripcion) {
+        this.id = id;
+        this.descripcion = descripcion;
+    }
+
+    /*accesadores y mutadores*/
+    public int getId() {
+        return id;
+    }
+
+    public boolean setId(int id) {
+        this.id = id;
+        return true;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public boolean setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+        return true;
+    }
+}

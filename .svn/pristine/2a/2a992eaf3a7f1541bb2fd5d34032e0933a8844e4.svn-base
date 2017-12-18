@@ -1,0 +1,559 @@
+/**
+ * Resuelve el Taller número 3 del módulo 6 "Profundización Desarrollo de Software",
+ * Programa CORFO "Mil Programadores".vv
+ *
+ * @autor Daniel Zúñiga Correa, 2017-12-07 (yyyy-mm-dd)
+ */
+package controlador;
+
+/*importación de las librerías correspondientes*/
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import javax.swing.JOptionPane;
+import modelo.*;
+import vista.*;
+
+/**
+ * Clase Controlador que contiene las clases correspondientes al "Controlador"
+ * del patrón MVC requerido en el documento del Taller. Implementa los Listener
+ * respectivos
+ *
+ * @author Daniel Zúñiga Correa
+ */
+public class ControladorVideoBuster implements ActionListener, MouseListener {
+
+    /*declara e inicializa las vistas*/
+    private MenuPrincipal vistaPrincipal = new MenuPrincipal();
+    private MenuAgregar vistaAgregar = new MenuAgregar();
+    private MenuEliminar vistaEliminar = new MenuEliminar();
+    private MenuBuscar vistaBuscar = new MenuBuscar();
+    private MenuModificar vistaModificar = new MenuModificar();
+    private MenuListar vistaListar = new MenuListar();
+
+    /*
+    declara e inicializa el objeto que contiene los métodos para leer y
+    grabar información en la base de datos
+     */
+    public RegistroPeliculas registroPeliculas = new RegistroPeliculas();
+
+    /*Constructor sin parámetros*/
+    public ControladorVideoBuster() {
+    }
+
+    /**
+     * Método para inicializar las vistas e implementar los Listeners
+     */
+    public void iniciar() {
+        /*inicializa la estructura de vistas*/
+        this.vistaPrincipal.setLocationRelativeTo(null);
+        this.vistaPrincipal.setVisible(true);
+
+        /*utilización de Listener para los ítems correspondientes al JMenú
+        de la vista principal
+         */
+        this.vistaPrincipal.mnuArchivoSalir.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                System.exit(0);
+            }
+        });
+        this.vistaPrincipal.mnuProcesosAgregar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                //despliega vista agregar
+                vistaPrincipal.setVisible(false);
+                vistaAgregar.setLocationRelativeTo(null);
+                limpiarAgregar();
+                vistaAgregar.setVisible(true);
+            }
+        });
+        this.vistaPrincipal.mnuProcesosEliminar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                //desliega vista eliminar
+                vistaEliminar.setLocationRelativeTo(null);
+                vistaEliminar.txtCodigo.setText("0");
+                vistaEliminar.setVisible(true);
+            }
+        });
+        this.vistaPrincipal.mnuProcesosModificar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                //desliega vista buscar para modificar
+                vistaBuscar.setLocationRelativeTo(null);
+                vistaBuscar.txtCodigo.setText("0");
+                vistaBuscar.setVisible(true);
+            }
+        });
+        this.vistaPrincipal.mnuProcesosListar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                if (registroPeliculas.cantidadPeliculas() > 0) {
+                    //despliega vista listar
+                    vistaListar.setLocationRelativeTo(null);
+                    vistaListar.setVisible(true);
+                    vistaListar.tbListar.setModel(registroPeliculas.mostrarPeliculas());
+                } else {
+                    JOptionPane.showMessageDialog(null, "No se han ingresado"
+                            + " películas al registro");
+                }
+            }
+        });
+        /*implementa Listener para botones en vista agregar*/
+        this.vistaAgregar.btnIngresar.setActionCommand("btnIngresar");
+        this.vistaAgregar.btnIngresar.addActionListener(this);
+        this.vistaAgregar.btnSalirAgregar.setActionCommand("btnSalirAgregar");
+        this.vistaAgregar.btnSalirAgregar.addActionListener(this);
+
+        /*implementa Listener para botón en vista eliminar*/
+        this.vistaEliminar.btnEliminar.setActionCommand("btnEliminar");
+        this.vistaEliminar.btnEliminar.addActionListener(this);
+
+        /*implementa Listener para botones en vista buscar*/
+        this.vistaBuscar.btnBuscar.setActionCommand("btnBuscar");
+        this.vistaBuscar.btnBuscar.addActionListener(this);
+
+        /*implementa Listener para botones en vista modificar*/
+        this.vistaModificar.btnModificarModificar.setActionCommand("btnModificarModificar");
+        this.vistaModificar.btnModificarModificar.addActionListener(this);
+        this.vistaModificar.btnNuevaBusqueda.setActionCommand("btnNuevaBusqueda");
+        this.vistaModificar.btnNuevaBusqueda.addActionListener(this);
+        this.vistaModificar.btnSalirModificar.setActionCommand("btnSalirModificar");
+        this.vistaModificar.btnSalirModificar.addActionListener(this);
+
+        /*implementa Listener para botones y mouse click en vista listar*/
+        this.vistaListar.btnSalirListar.setActionCommand("btnSalirListar");
+        this.vistaListar.btnSalirListar.addActionListener(this);
+        this.vistaListar.btnRefrescar.setActionCommand("btnRefrescar");
+        this.vistaListar.btnRefrescar.addActionListener(this);
+        this.vistaListar.btnModificarListar.setActionCommand("btnModificarListar");
+        this.vistaListar.btnModificarListar.addActionListener(this);
+        this.vistaListar.tbListar.addMouseListener(this);
+    }
+
+    /**
+     * Método para controlar las ocurrencia de seleccionar un botón en diversas
+     * vistas
+     *
+     * @param e corresponde al objeto relacionado con el evento ocurrido
+     */
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        /*maneja que botón se precionó*/
+        switch (e.getActionCommand()) {
+            case "btnIngresar":
+                /*asigna a variable el radio button escogido*/
+                if (validaNumerosAgregar()) {
+                    char formato4k;
+                    if (vistaAgregar.opt4k.isSelected()) {
+                        formato4k = 'S';
+                    } else {
+                        formato4k = 'N';
+                    }
+                    /*verifica la regla de negocio correspondiente a que el 
+                    código de la película a ingresar no exista*/
+                    if (!registroPeliculas.peliculaExiste(
+                            Integer.parseInt(vistaAgregar.txtCodigo.getText()))) {
+                        /*verifica que los datos a ingresar cumplan con las 
+                        reglas de negocio de cada uno de ellos, y de ser así la
+                        ingresa a la base de datosa*/
+                        if (registroPeliculas.insertarPelicula(
+                                Integer.parseInt(vistaAgregar.txtCodigo.getText()),
+                                Integer.parseInt(vistaAgregar.txtPrecio.getText()),
+                                Integer.parseInt(vistaAgregar.txtIdCategoria.getText()),
+                                vistaAgregar.txtDescripcionCategoria.getText(),
+                                formato4k, vistaAgregar.txtNombre.getText())) {
+                            JOptionPane.showMessageDialog(null, "Película ingresada correctamente.\n");
+                            limpiarAgregar();
+                        } else {
+                            JOptionPane.showMessageDialog(null, "No se agregó "
+                                    + "la película por error en los valores a ingresar");
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Ya existe una pelicula con el código"
+                                + vistaAgregar.txtCodigo.getText() + "\n"
+                                + "No se ingreso la película al registro.\n");
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(null, "Error en el formato "
+                            + "de los campos numéricos");
+                }
+                break;
+            case "btnEliminar":
+                /*verifica que el código que se desea eliminar sea convertible 
+                a número*/
+                if (esEntero(vistaEliminar.txtCodigo.getText())) {
+                    /*verifica que la película a eliminar exista en la base de 
+                    datos*/
+                    if (registroPeliculas.peliculaExiste(
+                            Integer.parseInt(vistaEliminar.txtCodigo.getText()))) {
+                        /*dada la importancia de la eliminación, solicita 
+                        verificación previa*/
+                        if (pideConfirmacion("ESTA ACCION ELIMINARA"
+                                + " PERMANENTEMENTE LA PELICULA") == JOptionPane.YES_OPTION) {
+                            /*elimina la película de la base de datos y lo 
+                            verifica*/
+                            if (registroPeliculas.eliminarPelicula(
+                                    Integer.parseInt(vistaEliminar.txtCodigo.getText()))) {
+                                JOptionPane.showMessageDialog(null, "La película "
+                                        + "código " + vistaEliminar.txtCodigo.getText()
+                                        + " fué eliminada correctamente.\n");
+                                vistaEliminar.txtCodigo.setText("");
+                            } else {
+                                JOptionPane.showMessageDialog(null, "No se pudo "
+                                        + "eliminar la película\n");
+                            }
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(null, "La Película código "
+                                + vistaEliminar.txtCodigo.getText() + " no existe en el registro.\n"
+                                + "La Película no fué eliminada.");
+                    }
+                } else {
+                }
+                break;
+            case "btnBuscar":
+                /*verifica que el código que se desea buscar sea convertible 
+                a número*/
+                if (esEntero(vistaBuscar.txtCodigo.getText())) {
+                    /*verifica que la película a eliminar exista en la base de 
+                    datos*/
+                    if (registroPeliculas.peliculaExiste(
+                            Integer.parseInt(vistaBuscar.txtCodigo.getText()))) {
+                        vistaModificar.setLocationRelativeTo(null);
+                        /*llena los campos correspondientes de la vista 
+                        modificar, con los datos correspondientes a la película
+                        a modificar*/
+                        agregarDatosModificar(Integer.parseInt(vistaBuscar.txtCodigo.getText()));
+                        vistaModificar.setVisible(true);
+                        vistaBuscar.setVisible(false);
+                    } else {
+                        JOptionPane.showMessageDialog(null, "La Película código "
+                                + vistaBuscar.txtCodigo.getText() + " no existe en el registro.\n");
+                    }
+                }
+                break;
+            case "btnSalirAgregar":
+                vistaPrincipal.setLocationRelativeTo(
+                        null);
+                vistaPrincipal.setVisible(
+                        true);
+                vistaAgregar.setVisible(
+                        false);
+                /*limpia los campos de la vista agregar*/
+                limpiarAgregar();
+                break;
+            case "btnSalirModificar":
+                vistaPrincipal.setLocationRelativeTo(
+                        null);
+                vistaPrincipal.setVisible(
+                        true);
+                vistaModificar.setVisible(
+                        false);
+                /*limpia los campos de la vista modificar*/
+                limpiarModificar();
+                break;
+            case "btnSalirListar":
+                vistaPrincipal.setLocationRelativeTo(
+                        null);
+                vistaPrincipal.setVisible(
+                        true);
+                vistaListar.setVisible(
+                        false);
+                /*limpia los campos de la vista listar*/
+                limpiarListar();
+                break;
+            /*refresca los datos de la JTable contenida en la vista listar,
+                pensando en un acceso multiusuario a la base de datos*/
+            case "btnRefrescar":
+                /*verifica que existan películas en la base de datos*/
+                if (registroPeliculas.cantidadPeliculas() > 0) {
+                    this.vistaListar.tbListar.setModel(registroPeliculas.mostrarPeliculas());
+                    /*limpia los campos de la vista listar*/
+                    limpiarListar();
+                } else {
+                    JOptionPane.showMessageDialog(null, "No se han ingresado"
+                            + " películas al registro");
+                }
+                break;
+            case "btnNuevaBusqueda":
+                /*despliega la vista de búsqueda*/
+                vistaModificar.setVisible(
+                        false);
+                /*limpia los campos de la vista modificar*/
+                limpiarModificar();
+                /*inicializa el valor del campo de la vista buscar*/
+                vistaBuscar.txtCodigo.setText(
+                        "0");
+                vistaBuscar.setLocationRelativeTo(
+                        null);
+                vistaBuscar.setVisible(
+                        true);
+                break;
+            /*botón contenido en la vista modificar*/
+            case "btnModificarModificar":
+                /*verifica que no se ingresen datos no numericos en los 
+                    campos respectivos*/
+                if (validaNumerosModificar()) {
+                    char formato4k;
+                    if (vistaModificar.opt4k.isSelected()) {
+                        formato4k = 'S';
+                    } else {
+                        formato4k = 'N';
+                    }
+                    /*modifica los datos de la película en la base de datos,
+                    salvo el código*/
+                    if (registroPeliculas.modificarPelicula(
+                            Integer.parseInt(vistaModificar.txtCodigo.getText()),
+                            Integer.parseInt(vistaModificar.txtPrecio.getText()),
+                            Integer.parseInt(vistaModificar.txtIdCategoria.getText()),
+                            vistaModificar.txtDescripcionCategoria.getText(),
+                            formato4k, vistaModificar.txtNombre.getText())) {
+                        JOptionPane.showMessageDialog(null, "Película modificada correctamente.\n");
+                    } else {
+                        JOptionPane.showMessageDialog(null, "No se modificó "
+                                + "la película por error en los valores a ingresar");
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(null, "Error en el formato "
+                            + "de los campos numéricos");
+                }
+
+                break;
+            /*botón contenido en la vista listar*/
+            case "btnModificarListar":
+                /*verifica que no se ingresen datos no numericos en los 
+                    campos respectivos*/
+                if (validaNumerosListar()) {
+                    char formato4k;
+                    if (vistaListar.opt4k.isSelected()) {
+                        formato4k = 'S';
+                    } else {
+                        formato4k = 'N';
+                    }/*modifica los datos de la película en la base de datos,
+                    salvo el código*/
+                    if (registroPeliculas.modificarPelicula(
+                            Integer.parseInt(vistaListar.txtCodigo.getText()),
+                            Integer.parseInt(vistaListar.txtPrecio.getText()),
+                            Integer.parseInt(vistaListar.txtIdCategoria.getText()),
+                            vistaListar.txtDescripcionCategoria.getText(),
+                            formato4k, vistaListar.txtNombre.getText())) {
+                        this.vistaListar.tbListar.setModel(registroPeliculas.mostrarPeliculas());
+                        limpiarListar();
+                        JOptionPane.showMessageDialog(null, "Película modificada correctamente.\n");
+                    } else {
+                        JOptionPane.showMessageDialog(null, "No se modificó "
+                                + "la película por error en los valores a ingresar");
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(null, "Error en el formato "
+                            + "de los campos numéricos");
+                }
+                break;
+        }
+    }
+
+    /**
+     * Sobreescritura del método que permite asignar acciones a los "clicks" del
+     * mouse, utilizado en conjunto con la JTable de la vista listar.
+     *
+     * @param e corresponde al objeto relacionado con el evento ocurrido
+     */
+    @Override
+    public void mouseClicked(MouseEvent e
+    ) {
+        if (e.getButton() == 1)//boton izquierdo
+        {
+            //Muestro datos de producto a modificar
+            int fila = vistaListar.tbListar.rowAtPoint(e.getPoint());
+            if (fila > -1) {
+                vistaListar.txtCodigo.setText(String.valueOf(vistaListar.tbListar.getValueAt(fila, 0)));
+                vistaListar.txtNombre.setText(String.valueOf(vistaListar.tbListar.getValueAt(fila, 1)));
+                vistaListar.txtDescripcionCategoria.setText(String.valueOf(vistaListar.tbListar.getValueAt(fila, 2)));
+                vistaListar.txtIdCategoria.setText(String.valueOf(vistaListar.tbListar.getValueAt(fila, 3)));
+                vistaListar.txtPrecio.setText(String.valueOf(vistaListar.tbListar.getValueAt(fila, 4)));
+                if (String.valueOf(vistaListar.tbListar.getValueAt(fila, 5)).equalsIgnoreCase("4K")) {
+                    vistaListar.opt4k.setSelected(true);
+                } else {
+                    vistaListar.optNormal.setSelected(true);
+                }
+            }
+        }
+    }
+
+    /**
+     * Sobreescritura obligatoria de método presente en la interfase
+     * MouseListener, que no es usado en este proyecto
+     *
+     * @param e corresponde al objeto relacionado con el evento ocurrido
+     */
+    @Override
+    public void mousePressed(MouseEvent e
+    ) {
+
+    }
+
+    /**
+     * Sobreescritura obligatoria de método presente en la interfase
+     * MouseListener, que no es usado en este proyecto
+     *
+     * @param e corresponde al objeto relacionado con el evento ocurrido
+     */
+    @Override
+    public void mouseReleased(MouseEvent e
+    ) {
+
+    }
+
+    /**
+     * Sobreescritura obligatoria de método presente en la interfase
+     * MouseListener, que no es usado en este proyecto
+     *
+     * @param e corresponde al objeto relacionado con el evento ocurrido
+     */
+    @Override
+    public void mouseEntered(MouseEvent e
+    ) {
+
+    }
+
+    /**
+     * Sobreescritura obligatoria de método presente en la interfase
+     * MouseListener, que no es usado en este proyecto
+     *
+     * @param e corresponde al objeto relacionado con el evento ocurrido
+     */
+    @Override
+    public void mouseExited(MouseEvent e
+    ) {
+
+    }
+
+    /**
+     * Método para limpiar la vista agregar
+     */
+    private void limpiarAgregar() {
+        vistaAgregar.txtCodigo.setText("0");
+        vistaAgregar.txtNombre.setText("");
+        vistaAgregar.txtPrecio.setText("0");
+        vistaAgregar.txtIdCategoria.setText("0");
+        vistaAgregar.txtDescripcionCategoria.setText("");
+        vistaAgregar.optNormal.setSelected(true);
+    }
+
+    /**
+     * Método para limpiar la vista modificar
+     */
+    private void limpiarModificar() {
+        vistaModificar.txtCodigo.setText("0");
+        vistaModificar.txtNombre.setText("");
+        vistaModificar.txtPrecio.setText("0");
+        vistaModificar.txtIdCategoria.setText("0");
+        vistaModificar.txtDescripcionCategoria.setText("");
+        vistaModificar.optNormal.setSelected(true);
+    }
+
+    /**
+     * Método para limpiar la vista listar
+     */
+    private void limpiarListar() {
+        vistaListar.txtCodigo.setText("0");
+        vistaListar.txtNombre.setText("");
+        vistaListar.txtPrecio.setText("0");
+        vistaListar.txtIdCategoria.setText("0");
+        vistaListar.txtDescripcionCategoria.setText("");
+        vistaListar.optNormal.setSelected(true);
+    }
+
+    /**
+     * Método para reemplazar los valores en los campos de la vista modificar,
+     * por los correspondientes a la película que se desea modificar
+     *
+     * @param codigo corresponde al código de la película
+     */
+    private void agregarDatosModificar(int codigo) {
+        Pelicula peliculaTmp = registroPeliculas.buscarPelicula(codigo);
+        vistaModificar.txtCodigo.setText(String.valueOf(peliculaTmp.getCodigo()));
+        vistaModificar.txtNombre.setText(peliculaTmp.getNombre());
+        vistaModificar.txtPrecio.setText(String.valueOf(peliculaTmp.getPrecio()));
+        vistaModificar.txtIdCategoria.setText(String.valueOf(peliculaTmp.getCategoria().getId()));
+        vistaModificar.txtDescripcionCategoria.setText(peliculaTmp.getCategoria().getDescripcion());
+        if (peliculaTmp.getFormato4k() == 'S') {
+            vistaModificar.opt4k.setSelected(true);
+        } else {
+            vistaModificar.optNormal.setSelected(true);
+        }
+    }
+
+    /**
+     * Método para solicitar confirmación ante un evento de modificación
+     * permanente de la base de datos
+     *
+     * @param mensaje texto a desplegar
+     * @return retorna el valor correspondiente a la opcion elegida
+     */
+    private int pideConfirmacion(String mensaje) {
+        return JOptionPane.showConfirmDialog(null, mensaje + "\n",
+                "¿?", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    /**
+     * Método para validar que un string sea transformable a entero
+     *
+     * @param palabra corresponde al dato a validar
+     * @return devuelve true si el número es entero, false si no lo es
+     */
+    private boolean esEntero(String palabra) {
+        try {
+            Integer.parseInt(palabra);
+            return true;
+        } catch (NumberFormatException nfe) {
+            return false;
+        }
+    }
+
+    /**
+     * Método para validar la entrada de numeros enteros en la vista agregar
+     *
+     * @return devuelve true si todos los campos contienen strings
+     * transformables a enteros
+     */
+    private boolean validaNumerosAgregar() {
+        if (esEntero(vistaAgregar.txtCodigo.getText())
+                && esEntero(vistaAgregar.txtPrecio.getText())
+                && esEntero(vistaAgregar.txtIdCategoria.getText())) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Método para validar la entrada de numeros enteros en la vista modificar
+     *
+     * @return devuelve true si todos los campos contienen strings
+     * transformables a enteros
+     */
+    private boolean validaNumerosModificar() {
+        if (esEntero(vistaModificar.txtCodigo.getText())
+                && esEntero(vistaModificar.txtPrecio.getText())
+                && esEntero(vistaModificar.txtIdCategoria.getText())) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Método para validar la entrada de numeros enteros en la vista listar
+     *
+     * @return devuelve true si todos los campos contienen strings
+     * transformables a enteros
+     */
+    private boolean validaNumerosListar() {
+        if (esEntero(vistaListar.txtCodigo.getText())
+                && esEntero(vistaListar.txtPrecio.getText())
+                && esEntero(vistaListar.txtIdCategoria.getText())) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}

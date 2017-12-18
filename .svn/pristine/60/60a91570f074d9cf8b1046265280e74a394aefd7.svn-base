@@ -1,0 +1,429 @@
+/**
+ * Resuelve el Taller número 3 del módulo 6 "Profundización Desarrollo de Software",
+ * Programa CORFO "Mil Programadores".
+ *
+ * @autor Daniel Zúñiga Correa, 2017-12-07 (yyyy-mm-dd)
+ */
+package modelo;
+
+/*importación de las librerías correspondientes*/
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import javax.swing.table.DefaultTableModel;
+import sql.Conexion;
+
+/**
+ * Clase que contiene los métodos propios necesarios para leer y poblar la base
+ * de datos
+ *
+ * @author daniel Zúñiga Correa, 2017-12-07 (yyyy-mm-dd)
+ */
+public class RegistroPeliculas extends Conexion {
+
+    /**
+     * Método para almacenar el contenido de la tabla categoria en un array de
+     * objetos Categoria, para su posterior uso
+     *
+     * @return retorna un array de objetos Categoria
+     */
+    public Categoria[] obtenerCategorias() {
+        Categoria[] todasCategorias;
+        int cantidadRegistros = 0;
+        try {
+            PreparedStatement pstm = this.getConexion().prepareStatement("SELECT count(*) as total FROM categoria");
+            ResultSet res = pstm.executeQuery();
+            res.next();
+            cantidadRegistros = res.getInt("total");
+            res.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        }
+        todasCategorias = new Categoria[cantidadRegistros];
+        try {
+            PreparedStatement pstm = this.getConexion().prepareStatement("SELECT * FROM categoria");
+            ResultSet res = pstm.executeQuery();
+            int cont = 0;
+            while (res.next()) {
+                todasCategorias[cont] = new Categoria();
+                todasCategorias[cont].setId(Integer.parseInt(res.getString("id")));
+                todasCategorias[cont].setDescripcion(res.getString("descripcion"));
+                cont++;
+            }
+            res.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        }
+        return todasCategorias;
+    }
+
+    /**
+     * Método para obtener la cantidad de registros que contiene la tabla
+     * películas, y que fué necesario programar por separado del método
+     * obtenerPeliculas para evitar un error por existir demasiadas conexiones a
+     * la base de datos
+     *
+     * @return retorna el total de registros existentes en la tabla pelicula
+     */
+    public int cantidadPeliculas() {
+        int cantidadRegistros = 0;
+        try {
+            PreparedStatement pstm = this.getConexion().prepareStatement("SELECT count(*) as total FROM pelicula");
+            ResultSet res = pstm.executeQuery();
+            res.next();
+            cantidadRegistros = res.getInt("total");
+            res.close();
+        } catch (SQLException e) {
+            if (cantidadRegistros > 0) {
+                System.err.println(e.getMessage());
+            }
+        }
+        return cantidadRegistros;
+    }
+
+    /**
+     * Método para almacenar el contenido de la tabla pelicula en un array de
+     * objetos Pelicula, para su posterior uso
+     *
+     * @return retorna un array de objetos Pelicula
+     */
+    public Pelicula[] obtenerPeliculas() {
+        Pelicula[] todasPeliculas;
+        int cantidadRegistros = cantidadPeliculas();
+        todasPeliculas = new Pelicula[cantidadRegistros];
+        try {
+            PreparedStatement pstm = this.getConexion().prepareStatement("SELECT * FROM pelicula");
+            ResultSet res = pstm.executeQuery();
+            int cont = 0;
+            int id_categoria = 0;
+            while (res.next()) {
+                todasPeliculas[cont] = new Pelicula();
+                todasPeliculas[cont].setCodigo(Integer.parseInt(res.getString("codigo")));
+                todasPeliculas[cont].setPrecio(Integer.parseInt(res.getString("precio")));
+                id_categoria = Integer.parseInt(res.getString("id_categoria"));
+                todasPeliculas[cont].setCategoria(buscarCategoria(id_categoria));
+                todasPeliculas[cont].setFormato4k((char) res.getString("formato4k").charAt(0));
+                todasPeliculas[cont].setNombre(res.getString("nombre"));
+                cont++;
+            }
+            res.close();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        }
+        return todasPeliculas;
+    }
+
+    /**
+     * Método para crear la matriz de películas a ingresar en el JTable de la
+     * vista listar
+     *
+     * @return retorna un objeto DefaultTableModel que contiene una matriz de
+     * películas
+     */
+    public DefaultTableModel mostrarPeliculas() {
+        String texto = "";
+        DefaultTableModel tablemodel = new DefaultTableModel();
+        String[] nombreColumnas = {"Codigo", "Nombre", "Categoria", "Id Categoria",
+            "Precio", "Formato"};
+        Pelicula[] peliculasTemp = obtenerPeliculas();
+        Object[][] dato = new String[peliculasTemp.length][6];
+        int cont = 0;
+        while (cont < peliculasTemp.length) {
+            dato[cont][0] = String.valueOf(peliculasTemp[cont].getCodigo());
+            dato[cont][1] = peliculasTemp[cont].getNombre();
+            dato[cont][2] = peliculasTemp[cont].getCategoria().getDescripcion();
+            dato[cont][3] = String.valueOf(peliculasTemp[cont].getCategoria().getId());
+            dato[cont][4] = String.valueOf(peliculasTemp[cont].getPrecio());
+            if (peliculasTemp[cont].getFormato4k() == 'S') {
+                texto = "4K";
+            } else {
+                texto = "Normal";
+            }
+            dato[cont][5] = texto;
+
+            cont++;
+        }
+        tablemodel.setDataVector(dato, nombreColumnas);
+        return tablemodel;
+    }
+
+    /**
+     * Método para insertar un objeto Categoria a la tabla categoria
+     *
+     * @param id corresponde al campo respectivo de la tabla
+     * @param descripcion corresponde al campo respectivo de la tabla
+     * @return retorna true si la inserción fué existosa
+     */
+    public boolean insertarCategoria(int id, String descripcion) {
+        Categoria categoriaTemp = new Categoria();
+        if (!categoriaExiste(id)
+                && categoriaTemp.setId(id)
+                && categoriaTemp.setDescripcion(descripcion)) {
+            String query = " INSERT INTO modulo6taller3danielzuniga.categoria(id"
+                    + ",descripcion) "
+                    + "VALUES ( '" + id + "','" + descripcion + "' ) ";
+            try {
+                PreparedStatement pstm = this.getConexion().prepareStatement(query);
+                pstm.execute();
+                pstm.close();
+                return true;
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Método para insertar un objeto Pelicula a la tabla pelicula
+     *
+     * @param codigo corresponde al campo respectivo de la tabla
+     * @param precio corresponde al campo respectivo de la tabla
+     * @param id_categoria corresponde al campo respectivo de la tabla
+     * @param desc_categoria corresponde al campo respectivo de la tabla
+     * @param formato4k corresponde al campo respectivo de la tabla
+     * @param nombre corresponde al campo respectivo de la tabla
+     * @return retorna true si la inserción fué existosa
+     */
+    public boolean insertarPelicula(int codigo, int precio, int id_categoria,
+            String desc_categoria, char formato4k, String nombre) {
+        /*objetos temporales necesarios para la ejecución del método*/
+        Pelicula peliculaTemp = new Pelicula();
+        Categoria categoriaTemp = new Categoria();
+        /*verifica la existencia de la tupla que contiene el valor id_categoria,
+        llave primaria de la tabla categoria, y de no existir la ingresa, pues 
+        ello es necesario para cumplir con las restricciones propias de la 
+        relacion 1 - M existente en entre las tablas categoria y pelicula, 
+        acorde al diagrama E/R contenido en el documento del taller*/
+        insertarCategoria(id_categoria, desc_categoria);
+        categoriaTemp.setId(id_categoria);
+        categoriaTemp.setDescripcion(desc_categoria);
+        /*verifica la inexistencia de una tupla en la tabla pelicula que 
+            contenga el mismo código, pues ese campo corresponde a la llave 
+            primaria de dicha tabla*/
+        if (!peliculaExiste(codigo)) {
+            if (peliculaTemp.setCodigo(codigo)
+                    && peliculaTemp.setPrecio(precio)
+                    && peliculaTemp.setCategoria(categoriaTemp)
+                    && peliculaTemp.setFormato4k(formato4k)
+                    && peliculaTemp.setNombre(nombre)) {
+                String query = " INSERT INTO modulo6taller3danielzuniga.pelicula(codigo,precio,"
+                        + "id_categoria, formato4k, nombre) "
+                        + "VALUES ( '" + codigo + "','" + precio + "', '" + id_categoria
+                        + "','" + formato4k + "', '" + nombre
+                        + "' ) ";
+                try {
+                    PreparedStatement pstm = this.getConexion().prepareStatement(query);
+                    pstm.execute();
+                    pstm.close();
+                    return true;
+                } catch (SQLException e) {
+                    System.err.println(e.getMessage());
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Método para modificar una tupla contenida en la tabla categoria, método
+     * que no se utiliza en la ejecución del taller, pero se agrega para un uso
+     * eventual
+     *
+     * @param id corresponde al campo respectivo de la tabla
+     * @param descripcion corresponde al campo respectivo de la tabla
+     * @return retorna true si la modificación fué exitosa
+     */
+    public boolean modificarCategoria(int id, String descripcion) {
+        Categoria categoriaTemp = new Categoria();
+        /*verifica que el id de la tupla exista y que la variable descripcion 
+        cumpla con las reglas de negocio establecidas para dicho atributo*/
+        if (categoriaExiste(id) && categoriaTemp.setDescripcion(descripcion)) {
+            String query = "UPDATE modulo6taller3danielzuniga.categoria SET"
+                    + " descripcion='" + descripcion + "'"
+                    + " WHERE id='" + id + "'";
+            try {
+                PreparedStatement pstm = this.getConexion().prepareStatement(query);
+                pstm.execute();
+                pstm.close();
+                return true;
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Método para modificar una tupla contenida en la tabla pelicula
+     *
+     * @param codigo corresponde al campo respectivo de la tabla
+     * @param precio corresponde al campo respectivo de la tabla
+     * @param id_categoria corresponde al campo respectivo de la tabla
+     * @param desc_categoria corresponde al campo respectivo de la tabla
+     * @param formato4k corresponde al campo respectivo de la tabla
+     * @param nombre corresponde al campo respectivo de la tabla
+     * @return retorna true si la modificación fué exitosa
+     */
+    public boolean modificarPelicula(int codigo, int precio, int id_categoria,
+            String desc_categoria, char formato4k, String nombre) {
+        Pelicula peliculaTemp = new Pelicula();
+        Categoria categoriaTemp = new Categoria();
+        /*verifica la existencia de la tupla que contiene el valor id_categoria,
+        llave primaria de la tabla categoria, y de no existir la ingresa, pues 
+        ello es necesario para cumplir con las restricciones propias de la 
+        relacion 1 - M existente en entre las tablas categoria y pelicula, 
+        acorde al diagrama E/R contenido en el documento del taller*/
+        insertarCategoria(id_categoria, desc_categoria);
+        categoriaTemp.setId(id_categoria);
+        categoriaTemp.setDescripcion(desc_categoria);
+        /*en cumplimiento de lo señalado en el punto número 6 del documento del 
+        taller, NO SE VERIFICA A ESTE NIVEL la existencia de una tupla en la 
+        tabla pelicula, pues ello se constanta al ejecutar el método 
+        buscarPelicula() contemplado por este alumno para la vista buscar*/
+        if (peliculaTemp.setPrecio(precio)
+                && peliculaTemp.setCategoria(categoriaTemp)
+                && peliculaTemp.setFormato4k(formato4k)
+                && peliculaTemp.setNombre(nombre)) {
+            String query = "UPDATE modulo6taller3danielzuniga.pelicula SET precio='" + precio
+                    + "', id_categoria='" + id_categoria + "', formato4k='" + formato4k
+                    + "' , nombre='" + nombre
+                    + "' WHERE codigo='" + codigo + "'";
+            try {
+                PreparedStatement pstm = this.getConexion().prepareStatement(query);
+                pstm.execute();
+                pstm.close();
+                return true;
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Método para verificar la existencia de una película en la tabla
+     * respectiva de la base de datos
+     *
+     * @param codigo corresponde al campo respectivo de la tabla
+     * @return retorna true si existe a lo menos un registro con el código
+     * buscado
+     */
+    public boolean peliculaExiste(int codigo) {
+        boolean encontrado = false;
+        Pelicula peliculaTemp = new Pelicula();
+        Pelicula[] peliculasTemp;
+        peliculasTemp = obtenerPeliculas();
+        /*verifica que codigo cumpla con la regla de negocio respectiva*/
+        if (peliculaTemp.setCodigo(codigo)) {
+            for (int cont = 0; cont <= peliculasTemp.length - 1; cont++) {
+                if (peliculasTemp[cont].getCodigo() == codigo) {
+                    encontrado = true;
+                }
+            }
+        }
+        return encontrado;
+    }
+
+    /**
+     * Método para verificar la existencia de una categoría en la tabla
+     * respectiva de la base de datos
+     *
+     * @param id corresponde al campo respectivo de la tabla
+     * @return retorna true si existe a lo menos un registro con el código
+     * buscado
+     */
+    public boolean categoriaExiste(int id) {
+        boolean encontrado = false;
+        Categoria categoriaTemp = new Categoria();
+        Categoria[] categoriasTemp;
+        categoriasTemp = obtenerCategorias();
+        /*verifica que id cumpla con la regla de negocio respectiva*/
+        if (categoriaTemp.setId(id)) {
+            for (int cont = 0; cont <= categoriasTemp.length - 1; cont++) {
+                if (categoriasTemp[cont].getId() == id) {
+                    encontrado = true;
+                }
+            }
+        }
+        return encontrado;
+    }
+
+    /**
+     * Método para buscar la existencia de una tupla que contenga determinado
+     * código en la tabla pelicula
+     *
+     * @param codigo corresponde al campo respectivo de la tabla
+     * @return retorna true sila busqueda fué exitosa
+     */
+    public Pelicula buscarPelicula(int codigo) {
+        Pelicula peliculaTmp = new Pelicula();
+        Pelicula[] peliculasTemp;
+        peliculasTemp = obtenerPeliculas();
+        /*verifica si existe un registro con el código ingresado*/
+        if (peliculaExiste(codigo)) {
+            for (int cont = 0; cont <= peliculasTemp.length - 1; cont++) {
+                if (peliculasTemp[cont].getCodigo() == codigo) {
+                    peliculaTmp = peliculasTemp[cont];
+                }
+            }
+        }
+        return peliculaTmp;
+    }
+
+    /**
+     * Método para buscar la existencia de una tupla que contenga determinado id
+     * en la tabla categoria
+     *
+     * @param id corresponde al campo respectivo de la tabla
+     * @return retorna true sila busqueda fué exitosa
+     */
+    public Categoria buscarCategoria(int id) {
+        Categoria categoriaTmp = new Categoria();
+        Categoria[] categoriasTemp;
+        categoriasTemp = obtenerCategorias();
+        /*verifica si existe un registro con el id ingresado*/
+        if (categoriaExiste(id)) {
+            for (int cont = 0; cont <= categoriasTemp.length - 1; cont++) {
+                if (categoriasTemp[cont].getId() == id) {
+                    categoriaTmp = categoriasTemp[cont];
+                }
+            }
+        }
+        return categoriaTmp;
+    }
+
+    /**
+     * Método para eliminar registros en la tabla pelicula
+     *
+     * @param codigo corresponde al campo respectivo de la tabla
+     * @return retorna true si la eliminación fué exitosa
+     */
+    public boolean eliminarPelicula(int codigo) {
+        boolean resultado = false;
+        /*verifica si existe un registro con el código ingresado*/
+        if (peliculaExiste(codigo)) {
+            String query = " DELETE FROM modulo6taller3danielzuniga.pelicula WHERE codigo=" + codigo + " ";
+            try {
+                PreparedStatement pstm = this.getConexion().prepareStatement(query);
+                pstm.execute();
+                pstm.close();
+                resultado = true;
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
+
+        }
+        return resultado;
+    }
+}
