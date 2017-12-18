@@ -89,9 +89,9 @@ public class ControladorVideoBuster implements ActionListener, MouseListener {
                     //despliega vista listar películas
                     vistaListarPelicula.setLocationRelativeTo(null);
                     vistaListarPelicula.tbListar.setModel(registro.mostrarPeliculas());
-                    limpiarListar();
                     llenarCategorias("vistaListarPelicula", 0);
                     vistaListarPelicula.setVisible(true);
+                    asignaValoresTabla("vistaListarPelicula", 0);
                 } else {
                     JOptionPane.showMessageDialog(null, "No se han ingresado"
                             + " películas al registro");
@@ -106,12 +106,13 @@ public class ControladorVideoBuster implements ActionListener, MouseListener {
                     noCategorias();
                     vistaManejarCategoria.txtIdCategoria.setText("0");
                 } else {
+                    vistaManejarCategoria.tbListar.setModel(registro.mostrarCategorias());
                     vistaManejarCategoria.txtIdCategoria.setText(String.valueOf(vistaManejarCategoria.tbListar.getValueAt(0, 0)));
                     vistaManejarCategoria.txtDescripcionCategoria.setText(String.valueOf(vistaManejarCategoria.tbListar.getValueAt(0, 1)));
                     activarBotonesManejar();
+                    asignaValoresTabla("vistaManejarCategoria", 0);
                 }
                 vistaManejarCategoria.setLocationRelativeTo(null);
-                vistaManejarCategoria.tbListar.setModel(registro.mostrarCategorias());
                 vistaManejarCategoria.setVisible(true);
 
             }
@@ -486,26 +487,34 @@ public class ControladorVideoBuster implements ActionListener, MouseListener {
 //            botón contenido en la vista manejar categorías
             case "btnAgregarManejar":
 //                  agrega la nueva categoría
-                if (!registro.categoriaExiste(
-                        vistaManejarCategoria.txtDescripcionCategoria.getText())) {
+                if (vistaManejarCategoria.txtDescripcionCategoria.getText()
+                        .length() > 0 && vistaManejarCategoria.txtDescripcionCategoria
+                                .getText().equalsIgnoreCase(" ")) {
+                    if (!registro.categoriaExiste(
+                            vistaManejarCategoria.txtDescripcionCategoria.getText())) {
 //                        verifica que los datos a ingresar cumplan con las 
 //                        reglas de negocio de cada uno de ellos, y de ser así la
 //                        ingresa a la base de datosa
-                    if (registro.agregarCategoria(vistaManejarCategoria.txtDescripcionCategoria.getText())) {
-                        activarBotonesManejar();
-                        JOptionPane.showMessageDialog(null, "Categoría ingresada"
-                                + " correctamente.\n");
-                        limpiarManejar();
-                        vistaManejarCategoria.tbListar.setModel(registro.mostrarCategorias());
+                        if (registro.agregarCategoria(vistaManejarCategoria.txtDescripcionCategoria.getText())) {
+                            activarBotonesManejar();
+                            JOptionPane.showMessageDialog(null, "Categoría ingresada"
+                                    + " correctamente.\n");
+                            limpiarManejar();
+                            vistaManejarCategoria.tbListar.setModel(registro.mostrarCategorias());
+                            asignaValoresTabla("vistaManejarCategoria", 0);
+                        } else {
+                            JOptionPane.showMessageDialog(null, "No se agregó la"
+                                    + " categoría.");
+                        }
                     } else {
-                        JOptionPane.showMessageDialog(null, "No se agregó la"
-                                + " categoría.");
+                        JOptionPane.showMessageDialog(null, "Ya existe una categoría"
+                                + " con la descripción"
+                                + vistaManejarCategoria.txtDescripcionCategoria.getText() + ".\n"
+                                + "No se ingreso la categoría al registro.\n");
                     }
                 } else {
-                    JOptionPane.showMessageDialog(null, "Ya existe una categoría"
-                            + " con la descripción"
-                            + vistaManejarCategoria.txtDescripcionCategoria.getText() + ".\n"
-                            + "No se ingreso la categoría al registro.\n");
+                    JOptionPane.showMessageDialog(null, "Debe ingresar datos en"
+                            + " la descripción de la categoría.\n");
                 }
                 break;
             case "btnEliminarManejar":
@@ -530,6 +539,7 @@ public class ControladorVideoBuster implements ActionListener, MouseListener {
                                     noCategorias();
                                 } else {
                                     vistaManejarCategoria.tbListar.setModel(registro.mostrarCategorias());
+                                    asignaValoresTabla("vistaManejarCategoria", 0);
                                 }
                             } else {
                                 JOptionPane.showMessageDialog(null, "No se pudo "
@@ -566,26 +576,16 @@ public class ControladorVideoBuster implements ActionListener, MouseListener {
             if (vistaListarPelicula.isVisible()) {
                 int fila = vistaListarPelicula.tbListar.rowAtPoint(e.getPoint());
                 if (fila > -1) {
-                    vistaListarPelicula.txtCodigo.setText(String.valueOf(vistaListarPelicula.tbListar.getValueAt(fila, 0)));
-                    vistaListarPelicula.txtNombre.setText(String.valueOf(vistaListarPelicula.tbListar.getValueAt(fila, 1)));
-                    vistaListarPelicula.cboCategorias.setSelectedItem(String.valueOf(vistaListarPelicula.tbListar.getValueAt(fila, 2)));
-                    vistaListarPelicula.txtPrecio.setText(String.valueOf(vistaListarPelicula.tbListar.getValueAt(fila, 4)));
-                    if (String.valueOf(vistaListarPelicula.tbListar.getValueAt(fila, 5)).equalsIgnoreCase("4K")) {
-                        vistaListarPelicula.opt4k.setSelected(true);
-                    } else {
-                        vistaListarPelicula.optNormal.setSelected(true);
-                    }
+                    asignaValoresTabla("vistaListarPelicula", fila);
                 }
             }
             if (vistaManejarCategoria.isVisible()) {
                 int fila = vistaManejarCategoria.tbListar.rowAtPoint(e.getPoint());
                 if (fila > -1) {
-                    vistaManejarCategoria.txtIdCategoria.setText(String.valueOf(vistaManejarCategoria.tbListar.getValueAt(fila, 0)));
-                    vistaManejarCategoria.txtDescripcionCategoria.setText(String.valueOf(vistaManejarCategoria.tbListar.getValueAt(fila, 1)));
+                    asignaValoresTabla("vistaManejarCategoria", fila);
                 }
             }
         }
-
     }
 
     /**
@@ -860,5 +860,28 @@ public class ControladorVideoBuster implements ActionListener, MouseListener {
                 + "Ingrese la descripción de la primera categoría,\n"
                 + "presione el boton 'Agregar'.");
         desactivarBotonesManejar();
+    }
+
+    /**
+     * Método para leer y asignar valores desde la jTable de la vista listar, a
+     * los campos respectivos
+     *
+     * @param fila corresponde a la fila seleccionada en la JTable
+     */
+    private void asignaValoresTabla(String vista, int fila) {
+        if (vista.equals("vistaListarPelicula")) {
+            vistaListarPelicula.txtCodigo.setText(String.valueOf(vistaListarPelicula.tbListar.getValueAt(fila, 0)));
+            vistaListarPelicula.txtNombre.setText(String.valueOf(vistaListarPelicula.tbListar.getValueAt(fila, 1)));
+            vistaListarPelicula.cboCategorias.setSelectedItem(String.valueOf(vistaListarPelicula.tbListar.getValueAt(fila, 2)));
+            vistaListarPelicula.txtPrecio.setText(String.valueOf(vistaListarPelicula.tbListar.getValueAt(fila, 4)));
+            if (String.valueOf(vistaListarPelicula.tbListar.getValueAt(fila, 5)).equalsIgnoreCase("4K")) {
+                vistaListarPelicula.opt4k.setSelected(true);
+            } else {
+                vistaListarPelicula.optNormal.setSelected(true);
+            }
+        } else {
+            vistaManejarCategoria.txtIdCategoria.setText(String.valueOf(vistaManejarCategoria.tbListar.getValueAt(fila, 0)));
+            vistaManejarCategoria.txtDescripcionCategoria.setText(String.valueOf(vistaManejarCategoria.tbListar.getValueAt(fila, 1)));
+        }
     }
 }

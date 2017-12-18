@@ -256,7 +256,7 @@ public class Registro extends ConexionDB {
         int cantidadRegistros = cantidadPeliculas();
         todasPeliculas = new Pelicula[cantidadRegistros];
         String queryMySql = "SELECT * FROM pelicula";
-        String queryOracle = "SELECT * FROM pelicula;";
+        String queryOracle = "SELECT * FROM pelicula";
         try {
             PreparedStatement pstm;
             if (tipoConexionActiva.equalsIgnoreCase("MySqlLocal")
