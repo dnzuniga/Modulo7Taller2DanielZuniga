@@ -61,10 +61,15 @@ public class ControladorVideoBuster implements ActionListener, MouseListener {
             public void actionPerformed(ActionEvent evt) {
                 //despliega vista agregar
                 vistaPrincipal.setVisible(false);
-                vistaAgregarPelicula.setLocationRelativeTo(null);
                 limpiarAgregar();
-                llenarCategorias("vistaAgregarPelicula", 0);
-                vistaAgregarPelicula.setVisible(true);
+                if (registro.cantidadCategorias() == 0) {
+                    despliegaVistaManejarCategorias();
+                } else {
+                    vistaAgregarPelicula.setLocationRelativeTo(null);
+                    llenarCategorias("vistaAgregarPelicula", 0);
+                    vistaAgregarPelicula.setVisible(true);
+                }
+
             }
         });
         this.vistaPrincipal.mnuOpcionesEliminar.addActionListener(new ActionListener() {
@@ -488,7 +493,7 @@ public class ControladorVideoBuster implements ActionListener, MouseListener {
             case "btnAgregarManejar":
 //                  agrega la nueva categoría
                 if (vistaManejarCategoria.txtDescripcionCategoria.getText()
-                        .length() > 0 && vistaManejarCategoria.txtDescripcionCategoria
+                        .length() > 0 && !vistaManejarCategoria.txtDescripcionCategoria
                                 .getText().equalsIgnoreCase(" ")) {
                     if (!registro.categoriaExiste(
                             vistaManejarCategoria.txtDescripcionCategoria.getText())) {
@@ -883,5 +888,25 @@ public class ControladorVideoBuster implements ActionListener, MouseListener {
             vistaManejarCategoria.txtIdCategoria.setText(String.valueOf(vistaManejarCategoria.tbListar.getValueAt(fila, 0)));
             vistaManejarCategoria.txtDescripcionCategoria.setText(String.valueOf(vistaManejarCategoria.tbListar.getValueAt(fila, 1)));
         }
+    }
+
+    /**
+     * Método para desplegar la vista manejarCategorias
+     */
+    private void despliegaVistaManejarCategorias() {
+        //despliega vista manejar categoría
+        limpiarManejar();
+        if (registro.cantidadCategorias() == 0) {
+            noCategorias();
+            vistaManejarCategoria.txtIdCategoria.setText("0");
+        } else {
+            vistaManejarCategoria.tbListar.setModel(registro.mostrarCategorias());
+            vistaManejarCategoria.txtIdCategoria.setText(String.valueOf(vistaManejarCategoria.tbListar.getValueAt(0, 0)));
+            vistaManejarCategoria.txtDescripcionCategoria.setText(String.valueOf(vistaManejarCategoria.tbListar.getValueAt(0, 1)));
+            activarBotonesManejar();
+            asignaValoresTabla("vistaManejarCategoria", 0);
+        }
+        vistaManejarCategoria.setLocationRelativeTo(null);
+        vistaManejarCategoria.setVisible(true);
     }
 }
