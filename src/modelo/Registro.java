@@ -351,7 +351,6 @@ public class Registro extends ConexionDB {
      * @return retorna true si la inserción fué existosa
      */
     public boolean agregarCategoria(String descripcion) {
-        Categoria categoriaTemp = new Categoria();
         int id = -1, total = cantidadCategorias();
         boolean acierto = false;
         if (!categoriaExiste(descripcion)) {

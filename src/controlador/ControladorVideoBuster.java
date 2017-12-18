@@ -509,7 +509,8 @@ public class ControladorVideoBuster implements ActionListener, MouseListener {
                             asignaValoresTabla("vistaManejarCategoria", 0);
                         } else {
                             JOptionPane.showMessageDialog(null, "No se agregó la"
-                                    + " categoría.");
+                                    + " categoría por que la tabla categorías"
+                                    + " no se ha creado.");
                         }
                     } else {
                         JOptionPane.showMessageDialog(null, "Ya existe una categoría"
