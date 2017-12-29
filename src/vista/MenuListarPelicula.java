@@ -75,6 +75,8 @@ public class MenuListarPelicula extends javax.swing.JFrame {
 
         jLabel4.setText("Precio");
 
+        txtCodigo.setEditable(false);
+
         txtNombre.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 txtNombreActionPerformed(evt);

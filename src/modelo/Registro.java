@@ -24,9 +24,9 @@ public class Registro extends ConexionDB {
     private String url = "localhost";
     private String puerto = "1521";
     private String schema = "modulo6taller4danielzuniga";
-    private String usuario = "modulo6taller4danielzuniga";
-    private String contrasena = "modulo6taller4danielzuniga";
-    public String tipoConexionActiva = "OracleLocal";
+    private String usuario = "root";
+    private String contrasena = "root";
+    public String tipoConexionActiva = "MySqlLocal";
     public static Statement stmt;
     public static Connection con;
 
@@ -588,6 +588,27 @@ public class Registro extends ConexionDB {
     }
 
     /**
+     * Sobrecarga del método para verificar la existencia de una película en la
+     * tabla respectiva de la base de datos
+     *
+     * @param texto corresponde al texto a buscar en el nombre de la película
+     * @return retorna el número de películas que contienen el texto en su
+     * nombre
+     */
+    public int peliculaExiste(String texto) {
+        int encuentros = 0;
+        Pelicula[] peliculasTemp;
+        peliculasTemp = obtenerPeliculas();
+        for (int cont = 0; cont <= peliculasTemp.length - 1; cont++) {
+            if (peliculasTemp[cont].getNombre().toLowerCase()
+                    .contains(texto.toLowerCase())) {
+                encuentros++;
+            }
+        }
+        return encuentros;
+    }
+
+    /**
      * Método para verificar la existencia de una categoría en una película en
      * la tabla respectiva de la base de datos
      *
@@ -660,7 +681,7 @@ public class Registro extends ConexionDB {
      * código en la tabla pelicula
      *
      * @param codigo corresponde al campo respectivo de la tabla
-     * @return retorna true sila busqueda fué exitosa
+     * @return retorna un objeto película
      */
     public Pelicula buscarPelicula(int codigo) {
         Pelicula peliculaTmp = new Pelicula();
@@ -675,6 +696,62 @@ public class Registro extends ConexionDB {
             }
         }
         return peliculaTmp;
+    }
+
+    /**
+     * Método para buscar la o las tuplas que contengan determinado texto en el
+     * campo nombre en la tabla pelicula
+     *
+     * @param texto corresponde al texto a buscar
+     * @return retorna un array de películas que cumplen con el criterio
+     */
+    public Pelicula[] buscarPeliculasTexto(String texto) {
+        int encontradas = peliculaExiste(texto), indice = -1;
+        Pelicula[] peliculasEncontradas = new Pelicula[1];
+        Pelicula[] peliculasTemp = obtenerPeliculas();
+        /*verifica si existe un registro con el código ingresado*/
+        if (encontradas > 0) {
+            peliculasEncontradas = new Pelicula[encontradas];
+            for (int cont = 0; cont <= peliculasTemp.length - 1; cont++) {
+                if (peliculasTemp[cont].getNombre().toLowerCase()
+                        .contains(texto.toLowerCase())) {
+                    peliculasEncontradas[++indice] = peliculasTemp[cont];
+                }
+            }
+
+        }
+        return peliculasEncontradas;
+    }
+
+    /**
+     * Método para buscar la o las tuplas que contengan determinada categoría en
+     * la tabla pelicula
+     *
+     * @param descripcion corresponde a la descripción de la categoría
+     * @return retorna un array de películas que cumplen con el criterio
+     */
+    public Pelicula[] buscarPeliculasCategoria(String descripcion) {
+        int encontradas = 0, indice = -1;
+        Pelicula[] peliculasEncontradas = new Pelicula[1];
+        Pelicula[] peliculasTemp;
+        peliculasTemp = obtenerPeliculas();
+        if (categoriaExiste(descripcion)) {
+            for (int cont = 0; cont <= peliculasTemp.length - 1; cont++) {
+                if (peliculasTemp[cont].getCategoria().getDescripcion()
+                        .toLowerCase().contains(descripcion.toLowerCase())) {
+                    encontradas++;
+                }
+            }
+            peliculasEncontradas = new Pelicula[encontradas];
+            for (int cont = 0; cont <= peliculasTemp.length - 1; cont++) {
+                if (peliculasTemp[cont].getCategoria().getDescripcion()
+                        .toLowerCase().contains(descripcion.toLowerCase())) {
+                    peliculasEncontradas[++indice] = peliculasTemp[cont];
+                }
+            }
+
+        }
+        return peliculasEncontradas;
     }
 
     /**

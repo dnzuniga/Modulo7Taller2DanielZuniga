@@ -97,7 +97,6 @@ public class MenuPrincipal extends javax.swing.JFrame {
         mnuTipoConexion.setText("Tipo de Conexión");
 
         gbtnConexionDB.add(mnuConexionOracleLocal);
-        mnuConexionOracleLocal.setSelected(true);
         mnuConexionOracleLocal.setText("DB Oracle Local");
         mnuConexionOracleLocal.setToolTipText("");
         mnuTipoConexion.add(mnuConexionOracleLocal);
@@ -108,6 +107,7 @@ public class MenuPrincipal extends javax.swing.JFrame {
         mnuTipoConexion.add(jSeparator1);
 
         gbtnConexionDB.add(mnuConexionMySqlLocal);
+        mnuConexionMySqlLocal.setSelected(true);
         mnuConexionMySqlLocal.setText("DB MySql Local");
         mnuTipoConexion.add(mnuConexionMySqlLocal);
 
